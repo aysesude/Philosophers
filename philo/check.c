@@ -6,7 +6,7 @@
 /*   By: aycami <aycami@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/18 17:09:57 by aycami            #+#    #+#             */
-/*   Updated: 2025/08/20 00:14:26 by aycami           ###   ########.fr       */
+/*   Updated: 2025/08/20 00:24:35 by aycami           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -101,7 +101,7 @@ int	check(int argc, char **argv)
 	i = 1;
 	while (i < argc)
 	{
-		if(check_num(argv[i]))
+		if (check_num(argv[i]))
 			return (1);
 		i++;
 	}

@@ -6,7 +6,7 @@
 /*   By: aycami <aycami@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/18 17:09:55 by aycami            #+#    #+#             */
-/*   Updated: 2025/08/20 00:06:39 by aycami           ###   ########.fr       */
+/*   Updated: 2025/08/20 00:29:22 by aycami           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -84,6 +84,7 @@ void	init(t_data *data, char **argv)
 
 	gettimeofday(&time_val, NULL);
 	data->start_time = (time_val.tv_sec * 1000) + (time_val.tv_usec / 1000);
+	pthread_mutex_init(&data->print_mutex, NULL);
 	init_time(data, argv);
 	i = 0;
 	while (i < data->count)
