@@ -6,123 +6,90 @@
 /*   By: aycami <aycami@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/19 00:41:58 by aycami            #+#    #+#             */
-/*   Updated: 2025/08/19 15:48:37 by aycami           ###   ########.fr       */
+/*   Updated: 2025/08/19 23:49:12 by aycami           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philo.h"
 
-int print_action(t_philo *philo, char *msg)
+int	think(t_philo *philo)
 {
-    pthread_mutex_lock(&philo->die_mutex);
-    if (philo->die_flag)
-    {
-        pthread_mutex_unlock(&philo->die_mutex);
-        return 0;
-    }
-    pthread_mutex_unlock(&philo->die_mutex);
-    pthread_mutex_lock(&philo->data->print_mutex);
-    printf("%ld %d %s\n", get_timestamp(philo->data), philo->id + 1, msg);
-    pthread_mutex_unlock(&philo->data->print_mutex);
-    return 1;
+	if (!print_action(philo, "is thinking"))
+		return (0);
+	usleep(1000);
+	return (1);
 }
 
-int think(t_philo *philo)
+int	handle_single_philo(t_philo *philo)
 {
-    if(!print_action(philo, "is thinking"))
-        return 0;
-    return 1;
+	usleep(philo->data->die_time * 1000);
+	print_action(philo, "died");
+	pthread_mutex_lock(&philo->die_mutex);
+	philo->die_flag = 1;
+	pthread_mutex_unlock(&philo->die_mutex);
+	pthread_mutex_unlock(philo->left_fork);
+	philo->has_left = 0;
+	return (0);
 }
 
-int take_forks(t_philo *philo)
+int	take_forks(t_philo *philo)
 {
-    pthread_mutex_lock(philo->left_fork);
-    philo->has_left = 1;
-    if(!print_action(philo, "has taken a fork"))
-    {
-        pthread_mutex_unlock(philo->left_fork);
-        philo->has_left = 0;
-        return 0;
-    }
-    if (philo->data->count == 1)
-    {
-        usleep(philo->data->die_time * 1000);
-        print_action(philo, "died");
-        pthread_mutex_lock(&philo->die_mutex);
-        philo->die_flag = 1;
-        pthread_mutex_unlock(&philo->die_mutex);
-        pthread_mutex_unlock(philo->left_fork);
-        philo->has_left = 0;
-        return 0;
-    }
-    pthread_mutex_lock(philo->right_fork);
-    philo->has_right = 1;
-    if(!print_action(philo, "has taken a fork"))
-    {
-        pthread_mutex_unlock(philo->right_fork);
-        philo->has_right = 0;
-        pthread_mutex_unlock(philo->left_fork);
-        philo->has_left = 0;
-        return 0;
-    }
-    return 1;
+	pthread_mutex_lock(philo->left_fork);
+	philo->has_left = 1;
+	if (!print_action(philo, "has taken a fork"))
+	{
+		pthread_mutex_unlock(philo->left_fork);
+		philo->has_left = 0;
+		return (0);
+	}
+	if (philo->data->count == 1)
+		return (handle_single_philo(philo));
+	pthread_mutex_lock(philo->right_fork);
+	philo->has_right = 1;
+	if (!print_action(philo, "has taken a fork"))
+	{
+		pthread_mutex_unlock(philo->right_fork);
+		philo->has_right = 0;
+		pthread_mutex_unlock(philo->left_fork);
+		philo->has_left = 0;
+		return (0);
+	}
+	return (1);
 }
 
-
-int eat(t_philo *philo)
+int	eat(t_philo *philo)
 {
-    if(!print_action(philo, "is eating"))
-        return 0;
-    pthread_mutex_lock(&philo->meal_mutex);
-    philo->last_meal = get_timestamp(philo->data);
-    philo->meal_sum++;
-    pthread_mutex_unlock(&philo->meal_mutex);
-    usleep(philo->data->eat_time * 1000);
-    return 1;
+	if (!print_action(philo, "is eating"))
+		return (0);
+	pthread_mutex_lock(&philo->meal_mutex);
+	philo->last_meal = get_timestamp(philo->data);
+	philo->meal_sum++;
+	pthread_mutex_unlock(&philo->meal_mutex);
+	usleep(philo->data->eat_time * 1000);
+	return (1);
 }
 
-void release_forks(t_philo *philo)
+void	*routine(void *arg)
 {
-    if (philo->has_left)
-    {
-        pthread_mutex_unlock(philo->left_fork);
-        philo->has_left = 0;
-    }
-    if (philo->has_right)
-    {
-        pthread_mutex_unlock(philo->right_fork);
-        philo->has_right = 0;
-    }
-}
+	t_philo	*philo;
 
-int go_sleep(t_philo *philo)
-{
-    if(!print_action(philo, "is sleeping"))
-        return 0;
-    usleep(philo->data->sleep_time * 1000);
-    return 1;
-}
-
-void *routine(void *arg)
-{
-    t_philo *philo = (t_philo *)arg;
-
-    // Ensure fork-ownership flags are initialized
-    philo->has_left = 0;
-    philo->has_right = 0;
-
-    while (1)
-    {
-        if(!think(philo))
-            break;
-        if(!take_forks(philo))
-            break;
-        if(!eat(philo))
-            break;
-        release_forks(philo);
-        if(!go_sleep(philo))
-            break;
-    }
-    release_forks(philo);
-    return NULL;
+	philo = (t_philo *)arg;
+	philo->has_left = 0;
+	philo->has_right = 0;
+	if (philo->data->count > 1 && philo->id % 2 == 0)
+		usleep(philo->data->eat_time * 1000 / 2);
+	while (1)
+	{
+		if (!think(philo))
+			break ;
+		if (!take_forks(philo))
+			break ;
+		if (!eat(philo))
+			break ;
+		release_forks(philo);
+		if (!go_sleep(philo))
+			break ;
+	}
+	release_forks(philo);
+	return (NULL);
 }

@@ -6,36 +6,61 @@
 /*   By: aycami <aycami@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/18 17:09:55 by aycami            #+#    #+#             */
-/*   Updated: 2025/08/19 12:35:59 by aycami           ###   ########.fr       */
+/*   Updated: 2025/08/20 00:06:39 by aycami           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philo.h"
 
-void 	init_philos(t_data *data)
+void	init_forks(t_data *data)
 {
-	int i;
+	int	i;
 
 	i = 0;
-	while(i < data->count)
+	while (i < data->count)
 	{
 		pthread_mutex_init(&data->forks[i], NULL);
 		i++;
 	}
-	i = 0;
-	while(i < data->count)
+}
+
+void	assign_forks(t_data *data, int i)
+{
+	int	left_fork_idx;
+	int	right_fork_idx;
+
+	left_fork_idx = i;
+	right_fork_idx = (i + 1) % data->count;
+	if (left_fork_idx < right_fork_idx)
 	{
-    	data->philo[i] = malloc(sizeof(t_philo));
-    	data->philo[i]->id = i;
-    	data->philo[i]->last_meal = data->start_time;
-    	data->philo[i]->meal_sum = 0;
-    	data->philo[i]->data = data;
-    	data->philo[i]->left_fork = &data->forks[i];
-    	data->philo[i]->right_fork = &data->forks[(i + 1) % data->count];
+		data->philo[i]->left_fork = &data->forks[left_fork_idx];
+		data->philo[i]->right_fork = &data->forks[right_fork_idx];
+	}
+	else
+	{
+		data->philo[i]->left_fork = &data->forks[right_fork_idx];
+		data->philo[i]->right_fork = &data->forks[left_fork_idx];
+	}
+}
+
+void	init_philos(t_data *data)
+{
+	int	i;
+
+	init_forks(data);
+	i = 0;
+	while (i < data->count)
+	{
+		data->philo[i] = malloc(sizeof(t_philo));
+		data->philo[i]->id = i;
+		data->philo[i]->last_meal = data->start_time;
+		data->philo[i]->meal_sum = 0;
+		data->philo[i]->data = data;
+		assign_forks(data, i);
 		data->philo[i]->die_flag = 0;
 		pthread_mutex_init(&data->philo[i]->meal_mutex, NULL);
 		pthread_mutex_init(&data->philo[i]->die_mutex, NULL);
-    	i++;
+		i++;
 	}
 }
 
@@ -49,11 +74,6 @@ void	init_time(t_data *data, char **argv)
 		data->meals = ft_atoi(argv[5]);
 	else
 		data->meals = -1;
-	if (pthread_mutex_init(&data->print_mutex, NULL) == -1)
-	{
-		printf("Error: Mutex init failed\n");
-		exit(1);
-	}
 	init_philos(data);
 }
 
@@ -69,27 +89,6 @@ void	init(t_data *data, char **argv)
 	while (i < data->count)
 	{
 		pthread_create(&data->threads[i], NULL, routine, data->philo[i]);
-		usleep(100);
-		i++;
-	}
-}
-
-void	free_all(t_data *data)
-{
-	int	i;
-
-	i = 0;
-	while (i < data->count)
-	{
-		pthread_mutex_destroy(&data->philo[i]->meal_mutex);
-		pthread_mutex_destroy(&data->philo[i]->die_mutex);
-		free(data->philo[i]);
-		i++;
-	}
-	i = 0;
-	while (i < data->count)
-	{
-		pthread_mutex_destroy(&data->forks[i]);
 		i++;
 	}
 }

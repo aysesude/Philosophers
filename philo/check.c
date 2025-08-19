@@ -6,7 +6,7 @@
 /*   By: aycami <aycami@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/18 17:09:57 by aycami            #+#    #+#             */
-/*   Updated: 2025/08/19 11:13:27 by aycami           ###   ########.fr       */
+/*   Updated: 2025/08/20 00:14:26 by aycami           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,7 +63,7 @@ int	ft_atoi(const char *str)
 	return ((int)(result * sign));
 }
 
-void	check_num(char *str)
+int	check_num(char *str)
 {
 	long long	value;
 	int			i;
@@ -76,36 +76,39 @@ void	check_num(char *str)
 		if (str[i] > 57 || str[i] < 48)
 		{
 			printf("Error: Not numerical argument\n");
-			exit (1);
+			return (1);
 		}
 		i++;
 	}
 	value = ft_atoi(str);
-	if (value < 0 || value > 2147483647 || value < -2147483648)
+	if (value < 1 || value > 2147483647 || value < -2147483648)
 	{
 		printf("Error: Not positive or not integer value\n");
-		exit (1);
+		return (1);
 	}
+	return (0);
 }
 
-void	check(int argc, char **argv)
+int	check(int argc, char **argv)
 {
 	int	i;
 
 	if (argc < 5 || argc > 6)
 	{
 		printf("Error: Wrong number of arguments\n");
-		exit (1);
+		return (1);
 	}
 	i = 1;
 	while (i < argc)
 	{
-		check_num(argv[i]);
+		if(check_num(argv[i]))
+			return (1);
 		i++;
 	}
-	if (ft_atoi(argv[1]) > 200)
+	if (ft_atoi(argv[1]) > 200 || ft_atoi(argv[1]) < 1)
 	{
-		printf("Error: The number of philosophers cannot exceed 200\n");
-		exit (1);
+		printf("Error: The number of philo cannot > 200	or < 1\n");
+		return (1);
 	}
+	return (0);
 }
